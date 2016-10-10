@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!-- The COPYRIGHT file at the top level of this repository contains the full
+     copyright notices and license terms. -->
+<tryton>
+    <data>
+        <!-- stock.lot -->
+        <record model="ir.ui.view" id="lot_view_form">
+            <field name="model">stock.lot</field>
+            <field name="inherit" ref="stock_lot.lot_view_form"/>
+            <field name="name">lot_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="lot_view_tree">
+            <field name="model">stock.lot</field>
+            <field name="inherit" ref="stock_lot.lot_view_tree"/>
+            <field name="name">lot_tree</field>
+        </record>
+
+        <!-- cron task -->
+        <record model="res.user" id="user_deactivate_lots_without_stock">
+            <field name="login">user_cron_deactivate_lots_without_stock</field>
+            <field name="name">Cron Deactivate Lots without Stock</field>
+            <field name="signature"></field>
+            <field name="active" eval="False"/>
+        </record>
+        <record model="res.user-res.group"
+            id="user_deactivate_lots_without_stock_group_stock">
+            <field name="user" ref="user_deactivate_lots_without_stock"/>
+            <field name="group" ref="stock.group_stock"/>
+        </record>
+
+        <record model="ir.cron" id="cron_deactivate_lots_without_stock">
+            <field name="name">Deactivate Lots without Stock</field>
+            <field name="request_user" ref="res.user_admin"/>
+            <field name="user" ref="user_deactivate_lots_without_stock"/>
+            <field name="active" eval="False"/>
+            <field name="interval_number" eval="1"/>
+            <field name="interval_type">days</field>
+            <field name="number_calls" eval="-1"/>
+            <field name="repeat_missed" eval="False"/>
+            <field name="model">stock.lot</field>
+            <field name="function">deactivate_lots_without_stock</field>
+        </record>
+    </data>
+</tryton>
