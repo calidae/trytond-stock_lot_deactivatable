@@ -1,0 +1,15 @@
+#
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\n"
+
+msgctxt "field:stock.lot,active:"
+msgid "Active"
+msgstr "Actiu"
+
+msgctxt "model:ir.cron,name:cron_deactivate_lots_without_stock"
+msgid "Deactivate Lots without Stock"
+msgstr "Desactiva lots sense estoc"
+
+msgctxt "model:res.user,name:user_deactivate_lots_without_stock"
+msgid "Cron Deactivate Lots without Stock"
+msgstr "Planificador Desactivar lots sense estoc"
