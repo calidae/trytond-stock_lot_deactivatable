@@ -33,10 +33,10 @@ class Lot:
 
         assert isinstance(margin_days, int) and margin_days >= 0
 
-        locations = Location.search([
-                ('parent.type', '=', 'warehouse'),
-                ('type', '=', 'storage'),
+        warehouses = Location.search([
+                ('type', '=', 'warehouse'),
                 ])
+        location_ids = [w.storage_location.id for w in warehouses]
         stock_end_date = Date.today() - relativedelta.relativedelta(
             days=margin_days)
 
@@ -58,7 +58,7 @@ class Lot:
         if lots:
             domain.insert(0, ('id', 'in', [l.id for l in lots]))
 
-        with Transaction().set_context(locations=[l.id for l in locations],
+        with Transaction().set_context(locations=location_ids,
                 stock_date_end=stock_end_date):
             lots = cls.search(domain)
         logging.getLogger(cls.__name__).info("Deactivating %s lots", len(lots))
