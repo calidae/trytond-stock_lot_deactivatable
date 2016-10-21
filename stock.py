@@ -118,12 +118,14 @@ class Move:
                         and table._name in tables_to_find):
                     new_from_list.append(
                         table.join(lot,
+                            type_='LEFT',
                             condition=(table.lot == lot.id)))
                     break
                 found = find_table(table)
                 if found:
                     new_from_list.append(
                         table.join(lot,
+                            type_='LEFT',
                             condition=(found.lot == lot.id)))
                     break
                 new_from_list.append(table)
@@ -134,5 +136,5 @@ class Move:
             sub_query.from_ = From()
             for new_from in new_from_list:
                 sub_query.from_.append(new_from)
-            sub_query.where &= (lot.active == True)
+            sub_query.where &= ((lot.id == Null) | (lot.active == True))
         return query
