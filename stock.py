@@ -76,10 +76,10 @@ class Move:
         pool = Pool()
         Lot = pool.get('stock.lot')
         Period = pool.get('stock.period')
-
         query = super(Move, cls).compute_quantities_query(
             location_ids, with_childs=with_childs, grouping=grouping,
             grouping_filter=grouping_filter)
+
         if not query or 'lot' not in grouping:
             return query
 
@@ -109,6 +109,7 @@ class Move:
                 yield query
 
         lot = Lot.__table__()
+        slot = lot.select(lot.id, lot.active)
         union, = query.from_
         for sub_query in find_queries(union):
             # Find move table
@@ -117,16 +118,16 @@ class Move:
                 if (isinstance(table, Table)
                         and table._name in tables_to_find):
                     new_from_list.append(
-                        table.join(lot,
+                        table.join(slot,
                             type_='LEFT',
-                            condition=(table.lot == lot.id)))
+                            condition=(table.lot == slot.id)))
                     break
                 found = find_table(table)
                 if found:
                     new_from_list.append(
-                        table.join(lot,
+                        table.join(slot,
                             type_='LEFT',
-                            condition=(found.lot == lot.id)))
+                            condition=(found.lot == slot.id)))
                     break
                 new_from_list.append(table)
             else:
@@ -136,5 +137,5 @@ class Move:
             sub_query.from_ = From()
             for new_from in new_from_list:
                 sub_query.from_.append(new_from)
-            sub_query.where &= ((lot.id == Null) | (lot.active == True))
+            sub_query.where &= ((slot.id == Null) | (slot.active == True))
         return query
