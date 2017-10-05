@@ -9,4 +9,5 @@ def register():
     Pool.register(
         stock.Lot,
         stock.Move,
+        stock.Period,
         module='stock_lot_deactivatable', type_='model')
