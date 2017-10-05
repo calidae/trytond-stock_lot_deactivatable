@@ -8,7 +8,17 @@ from trytond.model import fields
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 
-__all__ = ['Lot', 'Move']
+__all__ = ['Lot', 'Move', 'Period']
+
+
+class Period:
+    __name__ = 'stock.period'
+    __metaclass__ = PoolMeta
+
+    @classmethod
+    def close(cls, periods):
+        with Transaction().set_context(inactive_lots=True):
+            return super(Period, cls).close(periods)
 
 
 class Lot:
@@ -137,5 +147,9 @@ class Move:
             sub_query.from_ = From()
             for new_from in new_from_list:
                 sub_query.from_.append(new_from)
+
+            inactive_lots = Transaction().context.get('inactive_lots', False)
+            if inactive_lots:
+                return query
             sub_query.where &= ((slot.id == Null) | (slot.active == True))
         return query
