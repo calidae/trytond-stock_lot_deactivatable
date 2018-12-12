@@ -1,44 +1,40 @@
 # The COPYRIGHT file at the top level of this repository contains the full
 # copyright notices and license terms.
-import doctest
 import unittest
+import doctest
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 
 import trytond.tests.test_tryton
-from trytond.tests.test_tryton import test_view, test_depends
-from trytond.tests.test_tryton import POOL, DB_NAME, USER, CONTEXT
+from trytond.tests.test_tryton import ModuleTestCase, with_transaction
+from trytond.tests.test_tryton import doctest_teardown
+from trytond.tests.test_tryton import doctest_checker
 from trytond.transaction import Transaction
+from trytond.pool import Pool
+
+from trytond.modules.company.tests import create_company, set_company
 
 
-class StockLotDeactivatableTestCase(unittest.TestCase):
-    'Test StockLotDeactivatable module'
+class StockLotDeactivatableTestCase(ModuleTestCase):
+    'Test Stock Lot Deactivatable module'
+    module = 'stock_lot_deactivatable'
 
-    def setUp(self):
-        trytond.tests.test_tryton.install_module('stock_lot_deactivatable')
-        self.company = POOL.get('company.company')
-        self.location = POOL.get('stock.location')
-        self.lot = POOL.get('stock.lot')
-        self.move = POOL.get('stock.move')
-        self.product = POOL.get('product.product')
-        self.template = POOL.get('product.template')
-        self.uom = POOL.get('product.uom')
-        self.user = POOL.get('res.user')
+    @with_transaction()
+    def test_deactivate_lots_without_stock(self):
+        pool = Pool()
+        Location = pool.get('stock.location')
+        Lot = pool.get('stock.lot')
+        Move = pool.get('stock.move')
+        Product = pool.get('product.product')
+        Template = pool.get('product.template')
+        Uom = pool.get('product.uom')
+        User= pool.get('res.user')
 
-    def test0005views(self):
-        'Test views'
-        test_view('stock_lot_deactivatable')
-
-    def test0006depends(self):
-        'Test depends'
-        test_depends()
-
-    def test0010deactivate_lots_without_stock(self):
-        'Test Lot.deactivate_lots_without_stock'
-        with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            unit, = self.uom.search([('name', '=', 'Unit')])
-            template, = self.template.create([{
+        company = create_company()
+        with set_company(company):
+            unit, = Uom.search([('name', '=', 'Unit')])
+            template, = Template.create([{
                         'name': 'Test Move.internal_quantity',
                         'type': 'goods',
                         'list_price': Decimal(1),
@@ -46,23 +42,16 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                         'cost_price_method': 'fixed',
                         'default_uom': unit.id,
                         }])
-            product, = self.product.create([{
+            product, = Product.create([{
                         'template': template.id,
                         }])
-            supplier, = self.location.search([('code', '=', 'SUP')])
-            storage, = self.location.search([('code', '=', 'STO')])
-            customer, = self.location.search([('code', '=', 'CUS')])
-            company, = self.company.search([
-                    ('rec_name', '=', 'Dunder Mifflin'),
-                    ])
+            supplier, = Location.search([('code', '=', 'SUP')])
+            storage, = Location.search([('code', '=', 'STO')])
+            customer, = Location.search([('code', '=', 'CUS')])
             currency = company.currency
-            self.user.write([self.user(USER)], {
-                'main_company': company.id,
-                'company': company.id,
-                })
 
             # Create 7 lots
-            lots = self.lot.create([{
+            lots = Lot.create([{
                         'number': str(x),
                         'product': product.id,
                         } for x in range(7)])
@@ -102,7 +91,7 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                 (lots[6], today + relativedelta(days=-2), -5, 'done'),
                 (lots[6], None, 3, 'draft'),
                 ]
-            moves = self.move.create([{
+            moves = Move.create([{
                         'product': product.id,
                         'lot': lot.id,
                         'uom': unit.id,
@@ -122,23 +111,23 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
             state2moves = {}
             for move, (_, _, _, state) in zip(moves, moves_data):
                 state2moves.setdefault(state, []).append(move)
-            self.move.do(state2moves['done'])
-            self.move.assign(state2moves['assigned'])
+            Move.do(state2moves['done'])
+            Move.assign(state2moves['assigned'])
 
             # reload lots
-            lots = self.lot.browse([l.id for l in lots])
+            lots = Lot.browse([l.id for l in lots])
             self.assertTrue(all(l.active for l in lots))
 
-            self.lot.deactivate_lots_without_stock(margin_days=6)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=6)
+            lots = Lot.browse([l.id for l in lots])
             self.assertTrue(all(l.active for l in lots))
 
-            self.lot.deactivate_lots_without_stock(margin_days=5)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=5)
+            lots = Lot.browse([l.id for l in lots])
             self.assertTrue(all(l.active for l in lots))
 
-            self.lot.deactivate_lots_without_stock(margin_days=4)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=4)
+            lots = Lot.browse([l.id for l in lots])
             self.assertEqual([(l.number, l.active) for l in lots], [
                     ('0', False),
                     ('1', True),
@@ -149,8 +138,8 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                     ('6', True),
                     ])
 
-            self.lot.deactivate_lots_without_stock(margin_days=3)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=3)
+            lots = Lot.browse([l.id for l in lots])
             self.assertEqual([(l.number, l.active) for l in lots], [
                     ('0', False),
                     ('1', False),
@@ -161,8 +150,8 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                     ('6', True),
                     ])
 
-            self.lot.deactivate_lots_without_stock(margin_days=2)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=2)
+            lots = Lot.browse([l.id for l in lots])
             self.assertEqual([(l.number, l.active) for l in lots], [
                     ('0', False),
                     ('1', False),
@@ -173,8 +162,8 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                     ('6', True),
                     ])
 
-            self.lot.deactivate_lots_without_stock(margin_days=1)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=1)
+            lots = Lot.browse([l.id for l in lots])
             self.assertEqual([(l.number, l.active) for l in lots], [
                     ('0', False),
                     ('1', False),
@@ -191,10 +180,10 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
             assert move.state == 'assigned'
             move.effective_date = today + relativedelta(days=-1)
             move.save()
-            self.move.do([move])
+            Move.do([move])
 
-            self.lot.deactivate_lots_without_stock(margin_days=2)
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock(margin_days=2)
+            lots = Lot.browse([l.id for l in lots])
             self.assertEqual([(l.number, l.active) for l in lots], [
                     ('0', False),
                     ('1', False),
@@ -205,8 +194,8 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                     ('6', True),
                     ])
 
-            self.lot.deactivate_lots_without_stock()  # margin_days
-            lots = self.lot.browse([l.id for l in lots])
+            Lot.deactivate_lots_without_stock()  # margin_days
+            lots = Lot.browse([l.id for l in lots])
             self.assertEqual([(l.number, l.active) for l in lots], [
                     ('0', False),
                     ('1', False),
@@ -217,13 +206,8 @@ class StockLotDeactivatableTestCase(unittest.TestCase):
                     ('6', True),
                     ])
 
-
 def suite():
     suite = trytond.tests.test_tryton.suite()
-    from trytond.modules.company.tests import test_company
-    for test in test_company.suite():
-        if test not in suite and not isinstance(test, doctest.DocTestCase):
-            suite.addTest(test)
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-        StockLotDeactivatableTestCase))
+            StockLotDeactivatableTestCase))
     return suite
