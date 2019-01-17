@@ -11,9 +11,8 @@ from trytond.transaction import Transaction
 __all__ = ['Lot', 'Move', 'Period']
 
 
-class Period:
+class Period(metaclass=PoolMeta):
     __name__ = 'stock.period'
-    __metaclass__ = PoolMeta
 
     @classmethod
     def close(cls, periods):
@@ -21,9 +20,8 @@ class Period:
             return super(Period, cls).close(periods)
 
 
-class Lot:
+class Lot(metaclass=PoolMeta):
     __name__ = 'stock.lot'
-    __metaclass__ = PoolMeta
     active = fields.Boolean('Active')
 
     @staticmethod
@@ -76,9 +74,8 @@ class Lot:
             cls.write(lots, {'active': False})
 
 
-class Move:
+class Move(metaclass=PoolMeta):
     __name__ = 'stock.move'
-    __metaclass__ = PoolMeta
 
     @classmethod
     def compute_quantities_query(cls, location_ids, with_childs=False,
