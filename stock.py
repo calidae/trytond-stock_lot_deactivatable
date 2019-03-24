@@ -79,13 +79,14 @@ class Move(metaclass=PoolMeta):
 
     @classmethod
     def compute_quantities_query(cls, location_ids, with_childs=False,
-            grouping=('product',), grouping_filter=None):
+            grouping=('product',), grouping_filter=None,
+            quantity_field='internal_quantity'):
         pool = Pool()
         Lot = pool.get('stock.lot')
         Period = pool.get('stock.period')
         query = super(Move, cls).compute_quantities_query(
             location_ids, with_childs=with_childs, grouping=grouping,
-            grouping_filter=grouping_filter)
+            grouping_filter=grouping_filter, quantity_field=quantity_field)
 
         if not query or 'lot' not in grouping:
             return query
