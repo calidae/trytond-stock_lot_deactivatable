@@ -38,12 +38,12 @@ class StockLotDeactivatableTestCase(ModuleTestCase):
                         'name': 'Test Move.internal_quantity',
                         'type': 'goods',
                         'list_price': Decimal(1),
-                        'cost_price': Decimal(0),
                         'cost_price_method': 'fixed',
                         'default_uom': unit.id,
                         }])
             product, = Product.create([{
                         'template': template.id,
+                        'cost_price': Decimal(0),
                         }])
             supplier, = Location.search([('code', '=', 'SUP')])
             storage, = Location.search([('code', '=', 'STO')])

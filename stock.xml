@@ -30,16 +30,9 @@
         </record>
 
         <record model="ir.cron" id="cron_deactivate_lots_without_stock">
-            <field name="name">Deactivate Lots without Stock</field>
-            <field name="request_user" ref="res.user_admin"/>
-            <field name="user" ref="user_deactivate_lots_without_stock"/>
-            <field name="active" eval="False"/>
+            <field name="method">stock.lot|deactivate_lots_without_stock</field>
             <field name="interval_number" eval="1"/>
             <field name="interval_type">days</field>
-            <field name="number_calls" eval="-1"/>
-            <field name="repeat_missed" eval="False"/>
-            <field name="model">stock.lot</field>
-            <field name="function">deactivate_lots_without_stock</field>
         </record>
     </data>
 </tryton>
