@@ -91,6 +91,10 @@ class Move(metaclass=PoolMeta):
         if not query or 'lot' not in grouping:
             return query
 
+        inactive_lots = Transaction().context.get('inactive_lots', False)
+        if inactive_lots:
+            return query
+
         tables_to_find = [cls._table]
         for grouping in Period.groupings():
             Cache = Period.get_cache(grouping)
@@ -115,12 +119,16 @@ class Move(metaclass=PoolMeta):
                         yield q
             elif isinstance(query, Select):
                 yield query
+                for table in query.from_:
+                    for q in find_queries(table):
+                        yield q
 
-        lot = Lot.__table__()
-        slot = lot.select(lot.id, lot.active)
+
         union, = query.from_
         for sub_query in find_queries(union):
             # Find move table
+            lot = Lot.__table__()
+            slot = lot.select(lot.id, lot.active)
             new_from_list = []
             for table in sub_query.from_:
                 if (isinstance(table, Table)
@@ -146,8 +154,10 @@ class Move(metaclass=PoolMeta):
             for new_from in new_from_list:
                 sub_query.from_.append(new_from)
 
-            inactive_lots = Transaction().context.get('inactive_lots', False)
-            if inactive_lots:
-                return query
-            sub_query.where &= ((slot.id == Null) | (slot.active == True))
+
+            if sub_query.where:
+                sub_query.where &= ((slot.id == Null) | (slot.active == True))
+            else:
+                sub_query.where = ((slot.id == Null) | (slot.active == True))
+
         return query
