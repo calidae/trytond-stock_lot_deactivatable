@@ -91,7 +91,7 @@ class Move(metaclass=PoolMeta):
         if not query or 'lot' not in grouping:
             return query
 
-        inactive_lots = Transaction().context.get('inactive_lots', False)
+        inactive_lots = Transaction().context.get('inactive_lots', True)
         if inactive_lots:
             return query
 
