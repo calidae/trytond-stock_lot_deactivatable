@@ -1,0 +1,36 @@
+name: Merge NaN-tic branches
+on:
+  schedule:
+    - cron:  '1 1 * * MON'
+jobs:
+  master:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: master
+      - name: Merge NaN-tic
+        run: |
+          git config --global user.name 'Calidae'
+          git config --global user.email 'calidaedev@users.noreply.github.com'
+          git remote add nantic https://github.com/NaN-tic/trytond-stock_lot_deactivatable.git
+          git fetch nantic
+          git merge --no-edit nantic/master
+          git push origin master
+
+  branch52:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: '5.2'
+      - name: Merge NaN-tic
+        run: |
+          git config --global user.name 'Calidae'
+          git config --global user.email 'calidaedev@users.noreply.github.com'
+          git remote add nantic https://github.com/NaN-tic/trytond-stock_lot_deactivatable.git
+          git fetch nantic
+          git merge --no-edit nantic/5.2
+          git push origin 5.2
