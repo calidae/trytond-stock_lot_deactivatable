@@ -54,7 +54,7 @@ class Lot(metaclass=PoolMeta):
                 & (
                     ((move.state == 'done')
                         & (move.effective_date > stock_end_date))
-                    | ~move.state.in_(['cancel', 'done'])
+                    | ~move.state.in_(['cancelled', 'done'])
                     )
                 ),
             group_by=(move.lot,))
